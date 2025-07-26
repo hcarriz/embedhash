@@ -9,8 +9,10 @@ import (
 	"go/format"
 	"hash"
 	"io"
+	"maps"
 	"os"
 	"path/filepath"
+	"slices"
 
 	"golang.org/x/tools/go/packages"
 )
@@ -45,8 +47,12 @@ func (r Result) Save(w io.Writer) error {
 		return err
 	}
 
-	for path, hash := range r.Data {
-		if _, err := fmt.Fprintf(buf, "\t%q: %q,\n", path, hash); err != nil {
+	keys := slices.Collect(maps.Keys(r.Data))
+
+	slices.Sort(keys)
+
+	for _, path := range keys {
+		if _, err := fmt.Fprintf(buf, "\t%q: %q,\n", path, r.Data[path]); err != nil {
 			return err
 		}
 	}
