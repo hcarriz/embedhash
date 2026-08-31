@@ -51,6 +51,7 @@ the old record superseded, and link both directions.
 
 - [ADR 0001: Exclude generated output from embedded hashes](0001-exclude-generated-output.md)
 - [ADR 0002: Automate Go tool releases with Release Please](0002-automate-go-tool-releases.md)
+- [ADR 0003: Use GitHub's workflow token for releases](0003-use-github-token-for-releases.md)
 
 ## Superseded decisions
 

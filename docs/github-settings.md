@@ -4,23 +4,23 @@ The repository workflow validates changes and uses Release Please to propose
 and publish releases. The following GitHub settings must be configured after
 the workflow reaches `master`; they cannot be enforced by committed files.
 
-## Release credential
+## Workflow credential
 
-Create a repository secret named `RELEASE_TOKEN`. Use a narrowly scoped
-fine-grained personal access token or GitHub App token whose identity can:
+Release Please uses the repository's built-in `GITHUB_TOKEN`; no separate
+release secret is required. The release job grants that token write access to
+Contents, Issues, and Pull requests, while the rest of the workflow remains
+read-only.
 
-- read repository metadata and contents;
-- create and update release pull requests and their labels;
-- create release tags and GitHub Releases; and
-- trigger workflows for its release pull requests.
+Under **Settings > Actions > General > Workflow permissions**, enable
+**Allow GitHub Actions to create and approve pull requests**. Organization
+policy may need to permit this setting before it can be enabled for the
+repository. See GitHub's documentation for
+[managing Actions settings](https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/enabling-features-for-your-repository/managing-github-actions-settings-for-a-repository).
 
-Grant repository permissions for Contents, Issues, and Pull requests only as
-needed for those operations. Do not use an organization-wide token when a
-repository-scoped credential is available. Rotate the credential according to
-the maintainer's credential policy.
-
-Release Please uses this token instead of the default `GITHUB_TOKEN` so the
-release pull request triggers the normal pull-request checks.
+GitHub may place pull-request workflow runs caused by `GITHUB_TOKEN` in an
+approval-required state. Approve the `Minimum Go` and `Release Gate` runs for a
+Release Please pull request before merging it. See GitHub's documentation on
+[triggering workflows](https://docs.github.com/en/actions/how-tos/write-workflows/choose-when-workflows-run/trigger-a-workflow).
 
 ## Branch rules
 
@@ -36,8 +36,8 @@ authored commit that reaches `master` follows the convention.
 ## Tag and release rules
 
 Protect tags matching `v*` against updates and deletion. Allow the identity
-behind `RELEASE_TOKEN` to create new release tags after the workflow gate
-passes. Enable immutable GitHub Releases when available.
+used by the release workflow to create new release tags after the workflow
+gate passes. Enable immutable GitHub Releases when available.
 
 Never move, replace, or silently delete a published tag. Roll a correction
 forward and retract an unsuitable Go module version in a later release.
