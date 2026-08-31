@@ -2,6 +2,13 @@
 package valid
 
 var HashesForEmbedded = map[string]string{
-	"test.md":      "ceb0947a7db674632116cb7fefb5424e",
-	"uhoh/uhoh.go": "07e16a3b94e2bd127b42ce10d4d99c43",
+	"test.md":              "ceb0947a7db674632116cb7fefb5424e",
+	"uhoh/02-number.txt":   "f55eb53829262e63db015ccfe5df61b9",
+	"uhoh/10-number.txt":   "52c7b46426d576fd861e36251593c38b",
+	"uhoh/Uppercase.txt":   "9be779e90541ab9fc3143db5ab4c6d5e",
+	"uhoh/a-space.txt":     "ea949316d47f0f57a015569d2a0d6016",
+	"uhoh/alpha.txt":       "e2e35117475aef27186668bff627f475",
+	"uhoh/nested/deep.txt": "4f0a6b9d34e7590910f0f8ff0a8be139",
+	"uhoh/uhoh.go":         "07e16a3b94e2bd127b42ce10d4d99c43",
+	"uhoh/z-last.txt":      "c3fc492c2deafaca77a41d79b511b441",
 }
