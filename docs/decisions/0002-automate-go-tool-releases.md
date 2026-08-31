@@ -3,6 +3,9 @@
 Status: Accepted
 Date: 2026-08-31
 
+The release-credential portion of this decision is superseded by
+[ADR 0003](0003-use-github-token-for-releases.md).
+
 ## Context
 
 `embedhash` needs reproducible semantic-version releases without requiring a
