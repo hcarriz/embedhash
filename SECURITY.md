@@ -31,10 +31,10 @@ of concept.
 ## Security expectations
 
 `embedhash` is a local build-time library and command. It loads Go package
-metadata, reads every file reported for embedding, and the command writes a
-generated file into each matching package. It is not a sandbox: run it only on
-source trees you trust, review the package pattern, and use `-dry` before
-writing when destinations are uncertain.
+metadata and reads every file reported for embedding except the configured
+generated output. The command writes that output into each matching package.
+It is not a sandbox: run it only on source trees you trust, review the package
+pattern, and use `-dry` before writing when destinations are uncertain.
 
 The command replaces an existing destination file and does not write
 atomically. The project does not impose limits on file count, file size, or

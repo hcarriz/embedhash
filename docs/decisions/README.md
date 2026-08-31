@@ -49,7 +49,7 @@ the old record superseded, and link both directions.
 
 ## Accepted decisions
 
-None yet.
+- [ADR 0001: Exclude generated output from embedded hashes](0001-exclude-generated-output.md)
 
 ## Superseded decisions
 

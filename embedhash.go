@@ -96,15 +96,19 @@ func getpackages(patterns ...string) ([]*packages.Package, error) {
 
 }
 
-func hashEmbeddedFiles(pkg *packages.Package, hasher hash.Hash) (map[string]string, error) {
+func hashEmbeddedFiles(pkg *packages.Package, hasher hash.Hash, outputFilename string) (map[string]string, error) {
 
 	if pkg == nil {
 		return nil, errors.New("pkg is nil")
 	}
 
 	m := make(map[string]string)
+	outputPath := filepath.Clean(filepath.Join(pkg.Dir, outputFilename))
 
 	for _, file := range pkg.EmbedFiles {
+		if filepath.Clean(file) == outputPath {
+			continue
+		}
 
 		f, err := os.Open(file)
 		if err != nil {
@@ -198,7 +202,8 @@ func OutputFileName(filename string) Option {
 
 // New loads the Go package pattern dir and returns one Result for each matching
 // package that contains embedded files. It reads and hashes embedded files but
-// does not write the returned results to disk.
+// does not write the returned results to disk. The configured output file is
+// excluded when an embed pattern matches it, preventing self-referential output.
 //
 // Package patterns use the syntax accepted by golang.org/x/tools/go/packages,
 // including patterns such as "./assets" and "./...".
@@ -241,7 +246,7 @@ func New(dir string, opts ...Option) ([]*Result, error) {
 			continue
 		}
 
-		result, err := hashEmbeddedFiles(pkg, cfg.hash)
+		result, err := hashEmbeddedFiles(pkg, cfg.hash, cfg.outputFilename)
 		if err != nil {
 			return nil, err
 		}

@@ -133,6 +133,8 @@ uses `embedhashes.go`, while the command uses `embedhash.go`.
   the separator.
 - Generated entries are sorted by path, so unchanged input produces stable
   source output.
+- The configured output file is excluded if an embed pattern matches it. This
+  prevents the generated map from hashing itself and changing on every run.
 - `OutputFileName` uses only the supplied path's base name. Generated files
   always stay in the matching package directory.
 - Discovery uses `go/packages`; the target packages and their module

@@ -68,6 +68,8 @@ Get explicit maintainer approval before changing:
 - Library defaults are MD5, `HashesForEmbedded`, and `embedhashes.go`. The CLI
   deliberately overrides the filename default with `embedhash.go`.
 - Generated keys are relative to the package directory and slash-normalized.
+- The configured output file is excluded from the hash map when an embed
+  pattern matches it. This prevents self-referential, non-idempotent output.
 - `Result.Save` sorts entries by key and formats valid Go source with the
   standard formatter. Its generated-code header and deterministic ordering are
   observable behavior.
