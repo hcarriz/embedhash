@@ -1,3 +1,5 @@
+// Package embedhash discovers files selected by Go //go:embed directives and
+// generates deterministic Go source containing their content hashes.
 package embedhash
 
 import (
@@ -23,13 +25,21 @@ type config struct {
 	outputFilename string
 }
 
+// Result describes the generated hash map for one Go package.
 type Result struct {
+	// Filename is the destination path suggested for the generated source.
 	Filename string
-	PkgName  string
-	VarName  string
-	Data     map[string]string
+	// PkgName is the package clause name used by Save.
+	PkgName string
+	// VarName is the generated map variable name used by Save.
+	VarName string
+	// Data maps slash-normalized, package-relative embedded paths to hex digests.
+	Data map[string]string
 }
 
+// Save writes Result as gofmt-formatted generated Go source to w. It returns an
+// error when the package name or variable name is empty or source generation
+// fails. Map entries are written in path order for deterministic output.
 func (r Result) Save(w io.Writer) error {
 
 	if r.PkgName == "" {
@@ -86,15 +96,19 @@ func getpackages(patterns ...string) ([]*packages.Package, error) {
 
 }
 
-func hashEmbeddedFiles(pkg *packages.Package, hasher hash.Hash) (map[string]string, error) {
+func hashEmbeddedFiles(pkg *packages.Package, hasher hash.Hash, outputFilename string) (map[string]string, error) {
 
 	if pkg == nil {
 		return nil, errors.New("pkg is nil")
 	}
 
 	m := make(map[string]string)
+	outputPath := filepath.Clean(filepath.Join(pkg.Dir, outputFilename))
 
 	for _, file := range pkg.EmbedFiles {
+		if filepath.Clean(file) == outputPath {
+			continue
+		}
 
 		f, err := os.Open(file)
 		if err != nil {
@@ -132,6 +146,7 @@ func hashEmbeddedFiles(pkg *packages.Package, hasher hash.Hash) (map[string]stri
 	return m, nil
 }
 
+// Option configures New.
 type Option interface {
 	apply(*config) error
 }
@@ -142,6 +157,8 @@ func (o option) apply(c *config) error {
 	return o(c)
 }
 
+// Hasher configures New to hash embedded files with h. New resets and reuses h
+// between files; the caller must not use h concurrently while New is running.
 func Hasher(h hash.Hash) Option {
 	return option(func(c *config) error {
 		if h == nil {
@@ -152,6 +169,8 @@ func Hasher(h hash.Hash) Option {
 	})
 }
 
+// OutputVarName configures the variable name in generated source. The default
+// is HashesForEmbedded.
 func OutputVarName(varName string) Option {
 	return option(func(c *config) error {
 
@@ -165,6 +184,9 @@ func OutputVarName(varName string) Option {
 	})
 }
 
+// OutputFileName configures the generated filename. Only the base name is used,
+// so the result remains in the package directory. The default is
+// embedhashes.go.
 func OutputFileName(filename string) Option {
 	return option(func(c *config) error {
 
@@ -178,6 +200,13 @@ func OutputFileName(filename string) Option {
 	})
 }
 
+// New loads the Go package pattern dir and returns one Result for each matching
+// package that contains embedded files. It reads and hashes embedded files but
+// does not write the returned results to disk. The configured output file is
+// excluded when an embed pattern matches it, preventing self-referential output.
+//
+// Package patterns use the syntax accepted by golang.org/x/tools/go/packages,
+// including patterns such as "./assets" and "./...".
 func New(dir string, opts ...Option) ([]*Result, error) {
 
 	cfg := config{
@@ -217,7 +246,7 @@ func New(dir string, opts ...Option) ([]*Result, error) {
 			continue
 		}
 
-		result, err := hashEmbeddedFiles(pkg, cfg.hash)
+		result, err := hashEmbeddedFiles(pkg, cfg.hash, cfg.outputFilename)
 		if err != nil {
 			return nil, err
 		}
