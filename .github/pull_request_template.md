@@ -22,6 +22,7 @@
 - [ ] `go test -race -count=1 ./...`
 - [ ] `go test -shuffle=on -count=1 ./...`
 - [ ] `go mod tidy` leaves intentional module metadata.
+- [ ] Pinned Staticcheck and govulncheck pass.
 - [ ] `git diff --check`
 - [ ] Relevant fuzz targets or benchmarks ran, or are not applicable.
 

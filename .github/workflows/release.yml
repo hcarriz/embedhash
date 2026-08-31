@@ -1,0 +1,114 @@
+name: Release
+
+on:
+  pull_request:
+    branches:
+      - master
+  push:
+    branches:
+      - master
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  minimum:
+    name: Minimum Go
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    env:
+      GOTOOLCHAIN: local
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up Go
+        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version: 1.24.x
+          cache: false
+
+      - name: Test at the compatibility floor
+        run: go test -count=1 ./...
+
+  release-gate:
+    name: Release Gate
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    env:
+      GOTOOLCHAIN: local
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Set up Go
+        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version: stable
+          cache: false
+
+      - name: Verify formatting and whitespace
+        run: |
+          go fmt ./...
+          git diff --exit-code
+          git diff --check
+
+      - name: Vet
+        run: go vet ./...
+
+      - name: Test
+        run: go test -race -shuffle=on -count=1 ./...
+
+      - name: Build packages and tool
+        run: go build ./...
+
+      - name: Verify module metadata
+        run: |
+          go mod tidy
+          go mod tidy -modfile=tools/go.mod
+          git diff --exit-code -- go.mod go.sum tools/go.mod tools/go.sum
+          test ! -f go.work
+          if test -n "$(go list -m -f '{{if .Replace}}{{.Path}}{{end}}' all)"; then
+            echo "release modules must not contain replace directives" >&2
+            exit 1
+          fi
+          if test -n "$(go list -modfile=tools/go.mod -m -f '{{if .Replace}}{{.Path}}{{end}}' all)"; then
+            echo "the tools module must not contain replace directives" >&2
+            exit 1
+          fi
+
+      - name: Run Staticcheck
+        run: go tool -modfile=tools/go.mod staticcheck ./...
+
+      - name: Scan reachable vulnerabilities
+        run: go tool -modfile=tools/go.mod govulncheck ./...
+
+  release-please:
+    name: Release Please
+    if: ${{ github.event_name != 'pull_request' && github.ref == 'refs/heads/master' }}
+    needs:
+      - minimum
+      - release-gate
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: write
+      issues: write
+      pull-requests: write
+    steps:
+      - name: Create or update release pull request
+        uses: googleapis/release-please-action@45996ed1f6d02564a971a2fa1b5860e934307cf7 # v5.0.0
+        with:
+          token: ${{ secrets.RELEASE_TOKEN }}
+          config-file: release-please-config.json
+          manifest-file: .release-please-manifest.json

@@ -18,11 +18,16 @@ that floor is treated as a consumer compatibility change.
 
 ## Installation
 
-Install the command:
+Add the command to the current module as a Go tool:
 
 ```sh
-go install github.com/hcarriz/embedhash/cmd/embedhash@latest
+go get -tool github.com/hcarriz/embedhash/cmd/embedhash@latest
+go tool embedhash -help
 ```
+
+Use an exact `vX.Y.Z` version instead of `latest` when the tool must remain
+pinned. `embedhash` is released as a Go module and is not distributed as
+standalone binary archives.
 
 Or add the library to another module:
 
@@ -46,7 +51,7 @@ var files embed.FS
 Run `embedhash` with an explicit Go package pattern:
 
 ```sh
-embedhash -hash sha256 -out embedhashes.go -var EmbeddedHashes ./assets
+go tool embedhash -hash sha256 -out embedhashes.go -var EmbeddedHashes ./assets
 ```
 
 This writes `assets/embedhashes.go`:

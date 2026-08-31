@@ -18,7 +18,8 @@ answers in the pull request. Do not report a vulnerability publicly; follow
 ## Development environment
 
 Use Go 1.24 or newer. A currently supported, fully patched Go release is
-recommended, especially for security-related work.
+recommended, especially for security-related work. Running the pinned
+development tools requires Go 1.27.
 
 Run the repository checks from the module root:
 
@@ -29,13 +30,18 @@ go test -count=1 ./...
 go test -race -count=1 ./...
 go test -shuffle=on -count=1 ./...
 go mod tidy
+go mod tidy -modfile=tools/go.mod
+go tool -modfile=tools/go.mod staticcheck ./...
+go tool -modfile=tools/go.mod govulncheck ./...
 git diff --check
 ```
 
-After `go mod tidy`, verify that any `go.mod` or `go.sum` change is intentional.
-The repository currently has no fuzz targets or benchmarks. Add focused ones
-when a change introduces attacker-influenced parsing or performance-sensitive
-behavior.
+After tidying both modules, verify that any `go.mod` or `go.sum` change is
+intentional. Development tools belong in `tools/go.mod`, not the public module
+graph. It is an alternate module file, so run its commands from the repository
+root with `-modfile` rather than changing into `tools/`. The repository
+currently has no fuzz targets or benchmarks. Add focused ones when a change
+introduces attacker-influenced parsing or performance-sensitive behavior.
 
 ## Design, documentation, and tests
 
@@ -94,8 +100,13 @@ the private process in [SECURITY.md](SECURITY.md).
 
 ## Releases
 
-No automated release workflow is currently committed. Adding release
-automation or publishing a release requires maintainer approval. Releases use
-semantic, `v`-prefixed Go module tags and accompanying GitHub release notes.
-Published versions are immutable: fix a bad release by rolling forward, and use
-a later `retract` directive if a module version must no longer be selected.
+Release Please derives versions and changelog entries from Conventional
+Commits. It opens or updates a release pull request after changes reach
+`master`; merging that pull request authorizes the gated workflow to create the
+`v`-prefixed Go module tag and GitHub Release.
+
+Releases publish no binary archives. Consumers add a tagged command version
+with `go get -tool` and invoke it with `go tool embedhash`. Published versions
+are immutable: fix a bad release by rolling forward, and use a later `retract`
+directive if a module version must no longer be selected. See
+[docs/github-settings.md](docs/github-settings.md) for required host settings.

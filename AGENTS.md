@@ -42,7 +42,13 @@ questions unless new evidence creates a conflict.
 - `cmd/embedhash/` contains the command-line entry point and filesystem writes.
 - `internal/valid/` is the embedded-file fixture used by tests.
 - `docs/decisions/` contains durable architecture decision records.
+- `docs/github-settings.md` documents host settings required by release CI.
 - `.github/pull_request_template.md` records change decisions and verification.
+- `.github/workflows/release.yml` validates changes and runs Release Please.
+- `release-please-config.json`, `.release-please-manifest.json`, and
+  `CHANGELOG.md` define and record the release lifecycle.
+- `tools/go.mod` and `tools/go.sum` pin development tools on Go 1.27 without
+  adding them to the public module graph.
 
 Keep the root library package flat. Add a package only when it has a distinct,
 independently useful responsibility.
@@ -131,23 +137,35 @@ go test -count=1 ./...
 go test -race -count=1 ./...
 go test -shuffle=on -count=1 ./...
 go mod tidy
+go mod tidy -modfile=tools/go.mod
+go tool -modfile=tools/go.mod staticcheck ./...
+go tool -modfile=tools/go.mod govulncheck ./...
 git diff --check
 ```
 
-The repository currently has no fuzz targets, benchmarks, pinned Staticcheck,
-or pinned govulncheck tool. Do not claim those checks ran unless the repository
-adds and runs them deliberately. Documentation-only changes still require a
-rendered-structure review and `git diff --check`.
+The repository currently has no fuzz targets or benchmarks. Staticcheck and
+govulncheck are pinned in the separate Go 1.27 tools module. Keep development
+tools out of the public module graph. Treat `tools/go.mod` as an alternate
+module file: run its commands from the repository root with `-modfile` rather
+than changing into `tools/`. Do not claim a check ran unless it was executed.
+Documentation-only changes still require a rendered-structure review and
+`git diff --check`.
 
 ## Commits and releases
 
 Every author-controlled commit uses Conventional Commits 1.0.0. The default
 branch is `master`; documentation and automation must agree with it.
 
-No release workflow is currently committed. Get maintainer approval before
-adding one or publishing a release. Releases use semantic `v`-prefixed Go
-module tags and GitHub release records. Published versions are immutable; roll
-fixes forward and retract an unsuitable module version in a later release.
+Release Please calculates versions from Conventional Commits and maintains a
+release pull request. Merging that pull request is publication approval; the
+gated workflow creates a semantic `v`-prefixed Go module tag, changelog, and
+GitHub Release. It publishes no binary archives because the command is consumed
+with `go get -tool` and `go tool embedhash`.
+
+Keep `.release-please-manifest.json`, `release-please-config.json`,
+`CHANGELOG.md`, the workflow, and [docs/github-settings.md](docs/github-settings.md)
+consistent. Published versions are immutable; roll fixes forward and retract
+an unsuitable module version in a later release.
 
 ## Handoff
 

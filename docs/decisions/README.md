@@ -50,6 +50,7 @@ the old record superseded, and link both directions.
 ## Accepted decisions
 
 - [ADR 0001: Exclude generated output from embedded hashes](0001-exclude-generated-output.md)
+- [ADR 0002: Automate Go tool releases with Release Please](0002-automate-go-tool-releases.md)
 
 ## Superseded decisions
 
